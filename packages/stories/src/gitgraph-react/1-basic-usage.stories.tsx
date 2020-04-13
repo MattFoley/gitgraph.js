@@ -1,23 +1,93 @@
 import * as React from "react";
 import { storiesOf } from "@storybook/react";
 import { Gitgraph, Mode, Branch } from "@gitgraph/react";
-import { GitgraphCore } from "@gitgraph/core";
+import { GitgraphCore, templateExtend, TemplateName } from "@gitgraph/core";
 
 import { createFixedHashGenerator, hashPrefix } from "../helpers";
 
 storiesOf("gitgraph-react/1. Basic usage", module)
-  .add("default", () => (
-    <Gitgraph options={{ generateCommitHash: createFixedHashGenerator() }}>
-      {(gitgraph) => {
-        const master = gitgraph.branch("master").commit("Initial commit");
-        const develop = gitgraph.branch("develop");
-        develop.commit("one");
-        master.commit("two");
-        develop.commit("three");
-        master.merge(develop);
-      }}
-    </Gitgraph>
-  ))
+  .add("default", () => {
+    const branchesOrder = [
+      "master",
+      "develop-platinum",
+      "develop-oxygen",
+      "release-oxygen",
+    ];
+
+    const compareBranchesOrder = (a: Branch["name"], b: Branch["name"]) =>
+      branchesOrder.indexOf(a) - branchesOrder.indexOf(b);
+
+    const renderOptions = {
+      generateCommitHash: createFixedHashGenerator(),
+      compareBranchesOrder,
+      author: " ",
+      branchLabelOnEveryCommit: true,
+      template: templateExtend(TemplateName.Metro, {
+        colors: [
+          "#979797",
+          "#008fb5",
+          "#f1c109",
+          "purple",
+          "orange",
+          "green",
+          "black",
+        ],
+        commit: {
+          message: { displayHash: false, displayAuthor: false },
+        },
+      }),
+    };
+    return (
+      <Gitgraph options={renderOptions}>
+        {(gitgraph) => {
+          const master = gitgraph.branch("master").commit({
+            subject: "Initial Commit",
+            author: "",
+          });
+          const developOxygen = master.branch("develop-oxygen");
+
+          // const releaseOxygen = gitgraph.branch("release-oxygen");
+          /*const developPlatinum = gitgraph.branch("develop-platinum");
+        const releasePlatinum = gitgraph.branch("release-platinum");
+        const developIridium = gitgraph.branch("develop-iridium");
+        const releaseIridium = gitgraph.branch("release-iridium");
+        const developUnobtainium = gitgraph.branch("develop-unobtainium");
+        const releaseUnobtainium = gitgraph.branch("release-unobtainium");
+        const developSkillzAppMVP = gitgraph.branch("develop-skillz-app-mvp");
+        const releaseSkillzAppMVP = gitgraph.branch("release-skillz-app-mvp");*/
+
+          developOxygen.commit("Initial Oxygen Development");
+
+          // const futureOxygenFeature = developOxygen.branch("developer-oxygen-feature");
+          // futureOxygenFeature.commit('Subgroup starts separate feature work (e.g. Shoutout Rebuild)');
+
+          developOxygen.commit("Hit Dev Complete, now branch");
+
+          const developPlatinum = master.branch({
+            name: "develop-platinum",
+          });
+          developPlatinum.commit("Begin Platinum feature development");
+
+          const releaseOxygen = developOxygen.branch("release-oxygen");
+
+          releaseOxygen.commit(
+            "Execute QA cycle, and then merge to master after release.",
+          );
+          master.merge(
+            releaseOxygen,
+            "Landing fully tested Oxygen back on Master",
+          );
+
+          developPlatinum.commit("Hit Dev Complete, now branch");
+          // futureOxygenFeature.commit('Subgroup reaches dev complete (e.g. Shoutout Rebuild)');
+          // releaseOxygen.merge(futureOxygenFeature, 'Land future feature work, now dev complete')
+
+          releaseOxygen.commit("Fixing P0 bugs");
+          master.merge(releaseOxygen, "Landing Oxygen P0 on Master");
+        }}
+      </Gitgraph>
+    );
+  })
   .add("pass graph instance as a prop", () => {
     const graph = new GitgraphCore<React.ReactElement<SVGElement>>({
       generateCommitHash: createFixedHashGenerator(),
